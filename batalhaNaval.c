@@ -1,31 +1,10 @@
 #include <stdio.h>
 
 #define TAM 10
-#define NAVIO 3
+#define TAM_HAB 5
 #define AGUA 0
-#define TAMANHO_NAVIO 3
-
-int pode_posicionar(int tabuleiro[TAM][TAM], int linha, int coluna, int dLinha, int dColuna) {
-    for (int i = 0; i < TAMANHO_NAVIO; i++) {
-        int l = linha + i * dLinha;
-        int c = coluna + i * dColuna;
-
-        if (l < 0 || l >= TAM || c < 0 || c >= TAM)
-            return 0;
-
-        if (tabuleiro[l][c] != AGUA)
-            return 0;
-    }
-    return 1;
-}
-
-void posicionar_navio(int tabuleiro[TAM][TAM], int linha, int coluna, int dLinha, int dColuna) {
-    for (int i = 0; i < TAMANHO_NAVIO; i++) {
-        int l = linha + i * dLinha;
-        int c = coluna + i * dColuna;
-        tabuleiro[l][c] = NAVIO;
-    }
-}
+#define NAVIO 3
+#define HABILIDADE 5
 
 void exibir_tabuleiro(int tabuleiro[TAM][TAM]) {
     printf("Tabuleiro:\n\n");
@@ -38,25 +17,68 @@ void exibir_tabuleiro(int tabuleiro[TAM][TAM]) {
     printf("\n");
 }
 
+void construir_cone(int habilidade[TAM_HAB][TAM_HAB]) {
+    for (int i = 0; i < TAM_HAB; i++) {
+        for (int j = 0; j < TAM_HAB; j++) {
+            habilidade[i][j] = (j >= TAM_HAB/2 - i && j <= TAM_HAB/2 + i) ? 1 : 0;
+        }
+    }
+}
+
+void construir_cruz(int habilidade[TAM_HAB][TAM_HAB]) {
+    for (int i = 0; i < TAM_HAB; i++) {
+        for (int j = 0; j < TAM_HAB; j++) {
+            habilidade[i][j] = (i == TAM_HAB/2 || j == TAM_HAB/2) ? 1 : 0;
+        }
+    }
+}
+
+void construir_octaedro(int habilidade[TAM_HAB][TAM_HAB]) {
+    for (int i = 0; i < TAM_HAB; i++) {
+        for (int j = 0; j < TAM_HAB; j++) {
+            habilidade[i][j] = (abs(i - TAM_HAB/2) + abs(j - TAM_HAB/2) <= TAM_HAB/2) ? 1 : 0;
+        }
+    }
+}
+
+void aplicar_habilidade(int tabuleiro[TAM][TAM], int habilidade[TAM_HAB][TAM_HAB], int linha, int coluna) {
+    int offset = TAM_HAB / 2;
+    for (int i = 0; i < TAM_HAB; i++) {
+        for (int j = 0; j < TAM_HAB; j++) {
+            int linTab = linha - offset + i;
+            int colTab = coluna - offset + j;
+
+            if (linTab >= 0 && linTab < TAM && colTab >= 0 && colTab < TAM) {
+                if (habilidade[i][j] == 1 && tabuleiro[linTab][colTab] == AGUA) {
+                    tabuleiro[linTab][colTab] = HABILIDADE;
+                }
+            }
+        }
+    }
+}
+
 int main() {
     int tabuleiro[TAM][TAM] = {0};
 
-    int l1 = 1, c1 = 2;
-    if (pode_posicionar(tabuleiro, l1, c1, 0, 1))
-        posicionar_navio(tabuleiro, l1, c1, 0, 1);
+    tabuleiro[2][2] = NAVIO;
+    tabuleiro[2][3] = NAVIO;
+    tabuleiro[2][4] = NAVIO;
 
-    int l2 = 5, c2 = 4;
-    if (pode_posicionar(tabuleiro, l2, c2, 1, 0))
-        posicionar_navio(tabuleiro, l2, c2, 1, 0);
+    tabuleiro[6][7] = NAVIO;
+    tabuleiro[7][7] = NAVIO;
+    tabuleiro[8][7] = NAVIO;
 
-    int l3 = 0, c3 = 0;
-    if (pode_posicionar(tabuleiro, l3, c3, 1, 1))
-        posicionar_navio(tabuleiro, l3, c3, 1, 1);
+    int cone[TAM_HAB][TAM_HAB] = {0};
+    int cruz[TAM_HAB][TAM_HAB] = {0};
+    int octaedro[TAM_HAB][TAM_HAB] = {0};
 
-    int l4 = 0, c4 = 9;
-    if (pode_posicionar(tabuleiro, l4, c4, 1, -1))
-        posicionar_navio(tabuleiro, l4, c4, 1, -1);
+    construir_cone(cone);
+    construir_cruz(cruz);
+    construir_octaedro(octaedro);
 
+    aplicar_habilidade(tabuleiro, cone, 1, 2);
+    aplicar_habilidade(tabuleiro, cruz, 5, 5);
+    aplicar_habilidade(tabuleiro, octaedro, 7, 2);
     exibir_tabuleiro(tabuleiro);
 
     return 0;
